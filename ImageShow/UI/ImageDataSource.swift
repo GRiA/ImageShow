@@ -147,11 +147,16 @@ extension ImageDataSource: ItemServiceDelegate {
 	}
 	
 	func check() {
-		cellTypes.enumerated().forEach {
+		let indices: [Int] =
+		cellTypes.enumerated().compactMap {
 			if case let .error(_, url) = $1 {
 				cellTypes[$0] = .image(url)
+				return $0
 			}
+			return nil
 		}
+		guard !indices.isEmpty else { return }
+		reloadItems(indices)
 	}
 }
 
