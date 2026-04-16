@@ -94,12 +94,14 @@ private extension ImageService {
 		]
 		
 		guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-			  let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+			  let cgimage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
 			return
 		}
-		
-		previewCache.set(UIImage(cgImage: image), for: fileName)
+		let image = UIImage(cgImage: cgimage)
+		previewCache.set(image, for: fileName)
 		let fileUrl = previewCacheUrl.appendingPathComponent(fileName)
-		try? data.write(to: fileUrl)
+		if let thumbData = image.pngData() {
+			try? thumbData.write(to: fileUrl)
+		}
 	}
 }
