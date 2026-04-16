@@ -28,7 +28,6 @@ final class ItemService {
 		downloadTask = Task {
 			do {
 				let itemListUrl = try await downloadSourceFile()
-				print("Item list: \(itemListUrl)")
 				let items = try await parseItemList(itemListUrl)
 				await updateItems(with: items)
 				
@@ -63,7 +62,6 @@ private extension ItemService {
 		let linkDetector = try NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
 		var cells: [CellType] = []
 		for try await line in fileUrl.lines {
-			print("Line: \(line)")
 			let matches = linkDetector.matches(in: line, range: NSRange(location: 0, length: line.count))
 			guard
 				!matches.isEmpty

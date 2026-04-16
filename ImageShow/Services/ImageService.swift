@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CryptoKit
 
 actor ImageService {
 	public enum ImageSize {
@@ -34,7 +35,7 @@ actor ImageService {
 	}
 	
 	nonisolated func cachedImage(from url: URL, with size: ImageSize) -> UIImage? {
-		let fileName = "\(url.hashValue).img"
+		let fileName = "\(url.persistentHash).img"
 		let cache = size == .full ? imageCache : previewCache
 		let image = cache.get(fileName)
 		guard
@@ -43,7 +44,7 @@ actor ImageService {
 			let folderUrl = size == .full ? cacheUrl : previewCacheUrl
 			let fileUrl = folderUrl.appendingPathComponent(fileName)
 			if FileManager.default.fileExists(atPath: fileUrl.path()),
-			   let data = try? Data(contentsOf: url),
+			   let data = try? Data(contentsOf: fileUrl),
 			   let image = UIImage(data: data) {
 				cache.set(image, for: fileName)
 				return image
@@ -72,7 +73,7 @@ private extension ImageService {
 			throw URLError(URLError.Code(rawValue: code))
 		}
 		
-		let fileName = "\(url.hashValue).img"
+		let fileName = "\(url.persistentHash).img"
 		saveImage(data, for: fileName)
 		createThumbnail(from: data, size: 150.0, fileName: fileName)
 		return cachedImage(from: url, with: size)
@@ -100,8 +101,16 @@ private extension ImageService {
 		let image = UIImage(cgImage: cgimage)
 		previewCache.set(image, for: fileName)
 		let fileUrl = previewCacheUrl.appendingPathComponent(fileName)
-		if let thumbData = image.pngData() {
+		if let thumbData = image.jpegData(compressionQuality: 0.6) {
 			try? thumbData.write(to: fileUrl)
 		}
+	}
+}
+
+extension URL {
+	nonisolated var persistentHash: String {
+		let data = Data(self.absoluteString.utf8)
+		let hash = Insecure.MD5.hash(data: data)
+		return hash.map { String(format: "%02hhx", $0) }.joined()
 	}
 }
